@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#FFFBF2">
+<meta name="description" content="筱喵 —— 一只可爱治愈、带点小傲娇的猫娘，陪你聊聊天。">
+<title>筱喵 · 陪你聊聊天</title>
+<link rel="icon" href="assets/xiaomiao.jpg">
+<link rel="stylesheet" href="styles/base.css">
+<link rel="stylesheet" href="styles/app.css">
+</head>
+<body>
+<div class="bg-aurora" aria-hidden="true"></div>
+
+<div class="app" id="app">
+
+  <!-- 顶栏 -->
+  <header class="topbar">
+    <div class="topbar-avatar">
+      <img src="assets/xiaomiao.jpg" alt="筱喵的头像">
+      <span class="online-dot" title="在线"></span>
+    </div>
+    <div class="topbar-text">
+      <h1 class="topbar-name">筱喵</h1>
+      <p class="topbar-status" id="moodLabel">正在打盹……</p>
+    </div>
+    <div class="topbar-actions">
+      <span class="mode-chip" id="modeChip" data-mode="daily">日常</span>
+      <button class="icon-btn" id="btnSettings" title="设置" aria-label="设置">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm7.4-2.6.1-1.4-.1-1.4 1.9-1.5-1.9-3.2-2.2.9a7 7 0 0 0-2.4-1.4L14.5 2h-3.7l-.3 2.3a7 7 0 0 0-2.4 1.4l-2.2-.9-1.9 3.2 1.9 1.5-.1 1.4.1 1.4-1.9 1.5 1.9 3.2 2.2-.9a7 7 0 0 0 2.4 1.4l.3 2.3h3.7l.3-2.3a7 7 0 0 0 2.4-1.4l2.2.9 1.9-3.2-1.9-1.5Z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- 欢迎页 -->
+  <section class="welcome" id="welcome">
+    <div class="welcome-avatar-wrap">
+      <img class="welcome-avatar" src="assets/xiaomiao.jpg" alt="筱喵">
+    </div>
+    <h2 class="welcome-title">嗨，我是筱喵</h2>
+    <p class="welcome-sub">今天过得怎么样呀？想聊什么都可以，我就在这儿。</p>
+    <div class="welcome-hints" id="welcomeHints">
+      <button class="hint-chip" data-fill="今天有点累，什么都不想干">今天有点累</button>
+      <button class="hint-chip" data-fill="今天超开心的，跟你说件事！">今天超开心</button>
+      <button class="hint-chip" data-fill="聊聊CS2最近的比赛吧">聊聊 CS2</button>
+      <button class="hint-chip" data-fill="陪我随便聊聊天吧">随便聊聊</button>
+    </div>
+  </section>
+
+  <!-- 消息区 -->
+  <main class="chat" id="chat" aria-live="polite"></main>
+
+  <!-- 意图提示（情绪关键词命中时显示） -->
+  <div class="notice-bar" id="noticeBar" hidden></div>
+
+  <!-- 输入区 -->
+  <footer class="composer">
+    <div class="composer-inner">
+      <button class="composer-reset" id="btnReset" title="重置全部记忆" aria-label="重置全部记忆">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7Z"/></svg>
+      </button>
+      <textarea id="input" rows="1" placeholder="跟筱喵说点什么……" autocomplete="off"></textarea>
+      <button class="send-btn" id="btnSend" aria-label="发送">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M3.4 20.4 21 12 3.4 3.6 3.4 10l12.6 2-12.6 2v4.4Z"/></svg>
+      </button>
+    </div>
+    <p class="composer-note">筱喵是 AI，不是真人，也不能替代专业帮助。</p>
+  </footer>
+</div>
+
+<!-- 设置面板 -->
+<div class="sheet-mask" id="sheetMask" hidden></div>
+<aside class="sheet" id="sheet" hidden aria-label="设置">
+  <div class="sheet-head">
+    <h3>设置</h3>
+    <button class="icon-btn" id="btnCloseSheet" aria-label="关闭">
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M18.3 5.7 12 12l6.3 6.3-1.4 1.4L10.6 13.4 4.3 19.7 2.9 18.3 9.2 12 2.9 5.7l1.4-1.4 6.3 6.3 6.3-6.3 1.4 1.4Z"/></svg>
+    </button>
+  </div>
+
+  <div class="sheet-body">
+    <div class="field">
+      <label for="apiKey">DeepSeek API Key</label>
+      <input type="password" id="apiKey" placeholder="sk-..." autocomplete="off" spellcheck="false">
+      <p class="field-hint" id="keyHint">只保存在你自己的浏览器里，不会上传到任何服务器。</p>
+    </div>
+
+    <div class="field">
+      <label for="apiBase">接口地址</label>
+      <input type="text" id="apiBase" placeholder="https://api.deepseek.com" spellcheck="false">
+      <p class="field-hint">默认官方地址。若遇跨域限制，可填自建代理地址。</p>
+    </div>
+
+    <div class="field">
+      <label for="modelPick">模型</label>
+      <select id="modelPick">
+        <option value="deepseek-chat">deepseek-chat（快，够用）</option>
+        <option value="deepseek-reasoner">deepseek-reasoner（更聪明，稍慢）</option>
+      </select>
+    </div>
+
+    <div class="field field-row">
+      <label for="memoryToggle">跨会话记忆</label>
+      <input type="checkbox" id="memoryToggle" checked>
+    </div>
+
+    <div class="sheet-section">
+      <h4>紧急情况</h4>
+      <p class="sheet-emg">如果你正处在危险中，请立刻拨打 <strong>110</strong> 或 <strong>120</strong>；想找人说话，可以拨打全国心理援助热线 <strong>12356</strong>。</p>
+    </div>
+
+    <button class="danger-btn" id="btnWipe">清空全部记忆与设置</button>
+
+    <div class="sheet-section">
+      <h4>关于</h4>
+      <p class="sheet-about" id="aboutLine">筱喵 · 情感陪伴聊天机器人</p>
+    </div>
+  </div>
+</aside>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

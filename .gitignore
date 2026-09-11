@@ -1,0 +1,20 @@
+# 依赖与本地杂物（本项目无构建步骤，通常用不到）
+node_modules/
+npm-debug.log*
+
+# 本地测试与临时文件
+_tmp_*/
+_tools/
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 个人配置：API Key 只存浏览器 localStorage，绝不要提交任何本地配置
+.env
+.env.local

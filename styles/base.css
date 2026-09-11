@@ -1,0 +1,135 @@
+/* ===========================================================
+   筱喵 · 设计系统
+   风格基调：治愈 / 醒目 / 温馨
+   =========================================================== */
+
+:root {
+  /* —— 主色：奶油白 + 暖黄（呼应头像） —— */
+  --cream:        #FFFBF2;
+  --cream-deep:   #FFF4DF;
+  --sun:          #FFD966;
+  --sun-deep:     #F5B93E;
+  --sun-soft:     #FFF0C2;
+
+  /* —— 强调色：珊瑚粉（猫娘的软萌） —— */
+  --coral:        #FF8FA3;
+  --coral-deep:   #F2687F;
+  --coral-soft:   #FFE3E9;
+
+  /* —— 情绪色：进入安抚模式后整体降饱和转柔紫 —— */
+  --calm:         #B9A7E0;
+  --calm-soft:    #EFE9FB;
+  --calm-bg:      #FBF8FF;
+
+  /* —— 文字 —— */
+  --ink:          #4A3F35;
+  --ink-soft:     #8C7E70;
+  --ink-faint:    #B8AA9C;
+
+  /* —— 结构 —— */
+  --line:         rgba(74, 63, 53, 0.08);
+  --card:         rgba(255, 255, 255, 0.86);
+  --bubble-me:    linear-gradient(135deg, #FFD966 0%, #FFC94D 100%);
+  --bubble-her:   rgba(255, 255, 255, 0.94);
+
+  --shadow-sm:  0 2px 8px rgba(180, 150, 110, 0.10);
+  --shadow:     0 6px 24px rgba(180, 150, 110, 0.14);
+  --shadow-lg:  0 16px 48px rgba(180, 150, 110, 0.20);
+
+  --r-sm: 12px;
+  --r:    20px;
+  --r-lg: 28px;
+  --r-full: 999px;
+
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --font: "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei",
+          "Hiragino Sans GB", "Source Han Sans SC", system-ui,
+          -apple-system, "Segoe UI", sans-serif;
+}
+
+/* —— 安抚模式：整页换色，肉眼可见 —— */
+body[data-mood="calm"] {
+  --bubble-me:  linear-gradient(135deg, #C9B8EC 0%, #B9A7E0 100%);
+  --bubble-her: rgba(255, 255, 255, 0.96);
+  --sun:        #C9B8EC;
+  --coral:      #B9A7E0;
+  --coral-soft: #EFE9FB;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font);
+  color: var(--ink);
+  background: var(--cream);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow: hidden;
+}
+
+body[data-mood="calm"] { background: var(--calm-bg); }
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+input, textarea, select {
+  font-family: inherit;
+  color: inherit;
+}
+
+img { display: block; max-width: 100%; }
+
+/* —— 背景光晕：三个缓慢漂移的暖色光斑 —— */
+.bg-aurora {
+  position: fixed;
+  inset: -20vmax;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(38vmax 38vmax at 12% 8%,  rgba(255, 217, 102, 0.42), transparent 62%),
+    radial-gradient(34vmax 34vmax at 88% 18%, rgba(255, 143, 163, 0.30), transparent 62%),
+    radial-gradient(40vmax 40vmax at 50% 96%, rgba(255, 233, 179, 0.50), transparent 66%);
+  filter: blur(6px);
+  animation: aurora-drift 26s var(--ease) infinite alternate;
+  transition: opacity 900ms var(--ease);
+}
+
+body[data-mood="calm"] .bg-aurora {
+  background:
+    radial-gradient(38vmax 38vmax at 12% 8%,  rgba(185, 167, 224, 0.38), transparent 62%),
+    radial-gradient(34vmax 34vmax at 88% 18%, rgba(160, 190, 230, 0.28), transparent 62%),
+    radial-gradient(40vmax 40vmax at 50% 96%, rgba(214, 205, 240, 0.46), transparent 66%);
+}
+
+@keyframes aurora-drift {
+  from { transform: translate3d(-2%, -2%, 0) scale(1); }
+  to   { transform: translate3d(3%, 2%, 0) scale(1.08); }
+}
+
+/* —— 滚动条 —— */
+.chat::-webkit-scrollbar { width: 8px; }
+.chat::-webkit-scrollbar-thumb {
+  background: rgba(180, 150, 110, 0.22);
+  border-radius: var(--r-full);
+}
+.chat::-webkit-scrollbar-track { background: transparent; }
+
+/* —— 无障碍：尊重系统的减少动效设置 —— */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
