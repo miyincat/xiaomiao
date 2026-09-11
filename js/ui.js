@@ -186,6 +186,39 @@ export function setBusy(busy) {
   el.input.disabled = busy
 }
 
+/* ── 输入框与消息区的封装 ──
+ * main.js 一律通过这些函数操作 DOM。
+ * 之前 main.js 直接写 ui.input / ui.el.chat，而 ui.js 只导出 el 对象，
+ * 导致 ui.input 是 undefined，一点发送就抛 TypeError：
+ * 消息发不出去、输入框也清不掉。封装后这类错误不会再出现。 */
+
+export function getInput() {
+  return el.input.value
+}
+
+export function clearInput() {
+  el.input.value = ''
+  autoGrow()
+}
+
+export function focusInput() {
+  el.input.focus()
+}
+
+/** 清空整个消息区，并把欢迎页放回来 */
+export function clearChat() {
+  el.chat.innerHTML = ''
+}
+
+export function showWelcome(show = true) {
+  el.welcome.hidden = !show
+}
+
+/** 设置提示条文本，别名便于语义化调用 */
+export function setNotice(text, kind = 'info') {
+  notice(text, kind)
+}
+
 /** 回填历史消息（刷新页面后接着聊） */
 export function restoreHistory(history) {
   if (!history.length) return

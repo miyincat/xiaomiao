@@ -122,8 +122,7 @@ export async function handleSend(rawText) {
 
   ui.pushMessage('me', text)
   record({ who: 'me', text })
-  ui.input.value = ''
-  ui.autoGrow()
+  ui.clearInput()
 
   // 1) 先算模式（在模型之外判定，不依赖模型自觉）
   const result = classify(text, mode)
@@ -153,7 +152,7 @@ export async function handleSend(rawText) {
 
   busy = false
   ui.setBusy(false)
-  ui.input.focus()
+  ui.focusInput()
 }
 
 /** 重置全部对话记忆 */
@@ -165,11 +164,11 @@ export function doReset() {
   crisisRunning = false
   mode = 'daily'
 
-  ui.el.chat.innerHTML = ''
+  ui.clearChat()
   ui.setMode('daily')
-  ui.notice('')
+  ui.setNotice('')
   ui.pushSystemNote('记忆已清空，我们重新认识一次吧')
-  ui.el.welcome.hidden = true
+  ui.showWelcome(false)
 
   const hello = '唔……我们好像第一次见面？\n我是筱喵。（耳朵竖起来，好奇地看着你）今天想聊点什么呀？'
   ui.pushMessage('her', hello)
@@ -216,12 +215,12 @@ function bindSettings() {
     settings = store.loadSettings()
     memory = store.loadState()
     history = []
-    ui.el.chat.innerHTML = ''
+    ui.clearChat()
     syncSettingsUI()
     ui.closeSheet()
-    ui.notice('已经全部清空啦，包括 API Key。', 'info')
+    ui.setNotice('已经全部清空啦，包括 API Key。', 'info')
     ui.setMode('daily')
-    ui.el.welcome.hidden = false
+    ui.showWelcome(true)
   })
 
   document.addEventListener('keydown', (e) => {
@@ -259,9 +258,9 @@ function boot() {
 
   // 首次使用引导
   if (!settings.apiKey) {
-    ui.notice('第一次使用：点右上角齿轮，填入自己的 DeepSeek API Key 就能开始聊天了。', 'info')
-    ui.el.chat.innerHTML = ''
-    ui.el.welcome.hidden = false
+    ui.setNotice('第一次使用：点右上角齿轮，填入自己的 DeepSeek API Key 就能开始聊天了。', 'info')
+    ui.clearChat()
+    ui.showWelcome(true)
   } else if (history.length) {
     ui.setMode(memory.mood ?? 'daily')
   }
