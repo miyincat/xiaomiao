@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>筱喵 · 接口诊断</title>
+<style>
+  :root { --ink:#4A3F35; --soft:#8C7E70; --line:rgba(74,63,53,.12); }
+  * { box-sizing:border-box; }
+  body{
+    margin:0;padding:24px 16px 60px;
+    font-family:"PingFang SC","Microsoft YaHei UI","Microsoft YaHei",system-ui,sans-serif;
+    background:#FFFBF2;color:var(--ink);line-height:1.7;
+  }
+  .wrap{max-width:680px;margin:0 auto;}
+  h1{font-size:20px;margin:0 0 6px;}
+  .sub{color:var(--soft);font-size:13.5px;margin:0 0 22px;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:16px;box-shadow:0 4px 18px rgba(180,150,110,.08);}
+  label{display:block;font-size:13px;font-weight:600;margin-bottom:7px;}
+  input{width:100%;padding:11px 13px;font-size:14px;border-radius:10px;border:1.5px solid var(--line);outline:none;font-family:inherit;}
+  input:focus{border-color:#FF8FA3;}
+  .hint{font-size:11.5px;color:var(--soft);margin:7px 0 0;line-height:1.6;}
+  button{
+    width:100%;margin-top:16px;padding:13px;font-size:15px;font-weight:700;
+    border:none;border-radius:12px;cursor:pointer;font-family:inherit;
+    background:linear-gradient(135deg,#FFD966,#F5B93E);color:#5A4620;
+  }
+  button:disabled{opacity:.5;cursor:not-allowed;}
+  #out{margin-top:20px;}
+  .step{border-radius:12px;padding:13px 15px;margin-bottom:11px;font-size:13.5px;border:1px solid var(--line);background:#fff;}
+  .step h3{margin:0 0 7px;font-size:13.5px;display:flex;align-items:center;gap:8px;}
+  .badge{font-size:11px;font-weight:700;padding:2px 9px;border-radius:99px;flex:none;}
+  .ok .badge{background:#E4F7EA;color:#2E7D4F;}
+  .bad .badge{background:#FFEAEA;color:#B4444B;}
+  .warn .badge{background:#FFF4DF;color:#9A7B2E;}
+  .step pre{margin:8px 0 0;padding:10px;background:#FAF7F1;border-radius:8px;font-size:12px;overflow-x:auto;white-space:pre-wrap;word-break:break-word;color:#5C5145;}
+  .fix{margin:9px 0 0;padding:10px 12px;background:#FFF7F7;border-left:3px solid #FF8FA3;border-radius:6px;font-size:13px;}
+  .fix b{color:#B4444B;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>接口诊断</h1>
+  <p class="sub">逐项检查你的 API Key 能不能用，并把确切原因告诉你。<strong>Key 只在本地使用，不会发送到除 DeepSeek 官方接口以外的任何地方。</strong></p>
+
+  <div class="card">
+    <label for="key">你的 DeepSeek API Key</label>
+    <input id="key" type="password" placeholder="sk-..." autocomplete="off" spellcheck="false">
+    <p class="hint">在这里粘贴一次即可，不需要保存。</p>
+    <button id="run">开始诊断</button>
+  </div>
+
+  <div id="out"></div>
+</div>
+
+<script>
+const API = 'https://api.deepseek.com'
+const out = document.getElementById('out')
+const btn = document.getElementById('run')
+const keyInput = document.getElementById('key')
+
+function step(status, title, detail, fix) {
+  const cls = status === 'ok' ? 'ok' : status === 'warn' ? 'warn' : 'bad'
+  const label = status === 'ok' ? '通过' : status === 'warn' ? '注意' : '失败'
+  const d = document.createElement('div')
+  d.className = 'step ' + cls
+  let html = '<h3><span class="badge">' + label + '</span>' + title + '</h3>'
+  if (detail) html += '<pre>' + String(detail).replace(/</g, '&lt;') + '</pre>'
+  if (fix) html += '<div class="fix">' + fix + '</div>'
+  d.innerHTML = html
+  out.appendChild(d)
+  d.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+}
+
+async function probe(name, init) {
+  try {
+    const res = await fetch(API + '/chat/completions', init)
+    const text = await res.text()
+    return { ok: res.ok, status: res.status, text }
+  } catch (e) {
+    return { ok: false, status: 0, text: 'fetch 抛错: ' + e.message, network: true }
+  }
+}
+
+btn.addEventListener('click', async () => {
+  const key = keyInput.value.trim()
+  out.innerHTML = ''
+  btn.disabled = true
+  btn.textContent = '诊断中……'
+
+  // ── 1. Key 格式 ──
+  if (!key) {
+    step('bad', '1. Key 是否填写', '输入框是空的。')
+    btn.disabled = false; btn.textContent = '开始诊断'; return
+  }
+  if (!key.startsWith('sk-')) {
+    step('warn', '1. Key 格式', '你的 Key 不以 sk- 开头，DeepSeek 的 Key 通常形如 sk-xxxxxxxx。内容：' + key.slice(0, 8) + '…')
+  } else {
+    step('ok', '1. Key 格式', '形如 sk-…，长度 ' + key.length + ' 字符。')
+  }
+
+  const headers = { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key }
+  const minimal = JSON.stringify({ model: 'deepseek-chat', messages: [{ role: 'user', content: 'hi' }], max_tokens: 5 })
+
+  // ── 2. 跨域是否放行 ──
+  const pre = await fetch(API + '/chat/completions', {
+    method: 'OPTIONS',
+    headers: { Origin: location.origin, 'Access-Control-Request-Method': 'POST', 'Access-Control-Request-Headers': 'authorization,content-type' },
+  }).then(r => ({ ok: r.ok, allow: r.headers.get('access-control-allow-origin') })).catch(e => ({ ok: false, err: e.message }))
+
+  if (pre.allow) {
+    step('ok', '2. 浏览器跨域（CORS）', '接口放行了来源 ' + pre.allow + '，浏览器可以直连。')
+  } else {
+    step('warn', '2. 浏览器跨域（CORS）', pre.err ? '预检请求失败：' + pre.err : '没看到 access-control-allow-origin 响应头。')
+  }
+
+  // ── 3. 鉴权 + 对话 ──
+  const r1 = await probe('chat', { method: 'POST', headers, body: minimal })
+  if (r1.network) {
+    step('bad', '3. 请求能否发出', r1.text,
+      '<b>原因：</b>请求根本没发出去。可能是网络不通、被浏览器扩展拦截，或接口地址被改写。<br><b>怎么办：</b>检查网络；关掉广告拦截类扩展再试。')
+    btn.disabled = false; btn.textContent = '重新诊断'; return
+  }
+
+  if (r1.ok) {
+    let content = ''
+    try { content = JSON.parse(r1.text).choices[0].message.content } catch {}
+    step('ok', '3. 鉴权与对话请求', 'HTTP ' + r1.status + '，模型回复：' + JSON.stringify(content))
+  } else {
+    let msg = r1.text
+    try { msg = JSON.parse(r1.text).error.message } catch {}
+    let fix = ''
+    if (r1.status === 401) {
+      fix = '<b>原因：Key 无效。</b>可能复制时漏了字符、多了空格，或者这个 Key 已经被删除了。<br><b>怎么办：</b>去 <a href="https://platform.deepseek.com/api_keys" target="_blank">platform.deepseek.com/api_keys</a> 重新生成一个，整段复制粘贴（注意前后不要有空格）。'
+    } else if (r1.status === 402) {
+      fix = '<b>原因：账户余额不足。</b>DeepSeek 的 API 是预付费的，余额为 0 时即使 Key 正确也会被拒。<br><b>怎么办：</b>去 <a href="https://platform.deepseek.com/top_up" target="_blank">platform.deepseek.com/top_up</a> 充值，几块钱就能用很久。'
+    } else if (r1.status === 429) {
+      fix = '<b>原因：请求太频繁或额度受限。</b><br><b>怎么办：</b>等一会儿再试。'
+    } else if (r1.status === 400) {
+      fix = '<b>原因：请求参数被拒。</b>若你改过设置里的「接口地址」或「模型」，先恢复成默认值再试。'
+    } else {
+      fix = '<b>原因：接口返回了错误。</b>把上面的响应内容发给我，我来判断。'
+    }
+    step('bad', '3. 鉴权与对话请求', 'HTTP ' + r1.status + '\n' + msg, fix)
+  }
+
+  // ── 4. 账户余额 ──
+  try {
+    const b = await fetch(API + '/user/balance', { headers: { Authorization: 'Bearer ' + key } })
+    const t = await b.text()
+    if (b.ok) {
+      let info = t
+      try {
+        const j = JSON.parse(t)
+        info = '可用余额: ' + (j.balance_infos || []).map(x => x.currency + ' ' + x.total_balance).join(', ')
+      } catch {}
+      step('ok', '4. 账户余额', info)
+    } else {
+      let msg = t
+      try { msg = JSON.parse(t).error.message } catch {}
+      step(b.status === 401 ? 'bad' : 'warn', '4. 账户余额', 'HTTP ' + b.status + '\n' + msg,
+        b.status === 401 ? '这个接口也拒绝了 Key，进一步说明 Key 本身有问题。' : '')
+    }
+  } catch (e) {
+    step('warn', '4. 账户余额', '查询失败：' + e.message)
+  }
+
+  // ── 总结 ──
+  if (r1.ok) {
+    step('ok', '结论', '接口一切正常 —— Key、余额、跨域都没问题。\n如果网站上仍然报错，请把网站 Console（F12）里的红色报错发给我。')
+  }
+
+  btn.disabled = false
+  btn.textContent = '重新诊断'
+})
+</script>
+</body>
+</html>
